@@ -51,10 +51,29 @@ def get_gpu_info():
 
     return data_packet
 
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=None)
+def connect():
+    connected = False
+    while not connected:
+        try:
+            s = serial.Serial('/dev/ttyACM0', 9600, timeout=None)
+            connected = True
+        except serial.SerialException as e:
+            try:
+                s = serial.Serial('/dev/ttyACM1', 9600, timeout=None)
+                connected = True
+            except serial.SerialException as e:
+                time.sleep(1)
+
+    return s
+
+ser = connect()
 
 while True:
     time.sleep(1)
     data_packet = get_cpu_temps() + get_gpu_info() + get_cpu_clock()
-    ser.write(data_packet.encode('ascii'))
+    try:
+        ser.write(data_packet.encode('ascii'))
+    except (TypeError, serial.SerialException) as e:
+        ser.close()
+        ser = connect()
 

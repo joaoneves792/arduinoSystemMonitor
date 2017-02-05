@@ -3,6 +3,8 @@
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(2, 4, 8, 9, 10, 11);
 
+int hddPin = A5;
+
 char core0temp[] = "00";
 char core1temp[] = "00";
 char core2temp[] = "00";
@@ -19,6 +21,8 @@ void setup() {
   while (!Serial) {
     delay(100); // wait for serial port to connect. Needed for native USB port only
   }
+  pinMode(hddPin, INPUT_PULLUP); //We need to activate the internal pull up because hdd leds are ground triggered
+                                 //Therefore we connect this pin to the HDD- front panel connector pin
 
 }
 
@@ -44,11 +48,36 @@ void updateCpuData(char* data){
       cpu = false;
 }
 
+void updateHddStatus(){
+  static short highCounter = 0;
+  static short readCounter = 0; 
+  //We pool the disk activity line every 100ms
+  //if we get at least one positive for every 1000ms 
+  //then turn the indicator on turn
+  
+  if(!digitalRead(hddPin)){
+    highCounter++;
+  }
+  
+  readCounter++;
+  
+  if(readCounter >= 10){
+    if(highCounter > 0){
+      hdd = true;
+    }else{
+      hdd = false;
+    }
+    highCounter = 0;
+    readCounter = 0;
+  }
+}
+
 void refreshDisplay(){
   static char lines[2][16] = {"               ", "               "};
   char newLines[2][16];
   char gpu_active[] = "   ";
   char cpu_active[] = "   ";
+  char hdd_active[] = "   ";
 
   if(gpu)
     strncpy(gpu_active, "GPU", 3);
@@ -56,8 +85,12 @@ void refreshDisplay(){
   if(cpu)
     strncpy(cpu_active, "CPU", 3);
 
+  if(hdd)
+    strncpy(hdd_active, "HDD", 3);
 
-  snprintf(newLines[0], 16, "HDD %s %s %sC", gpu_active, cpu_active, gpuTemp);
+
+
+  snprintf(newLines[0], 16, "%s %s %s %sC", hdd_active, gpu_active, cpu_active, gpuTemp);
   snprintf(newLines[1], 16, "%sC %sC %sC %sC", core0temp, core1temp, core2temp, core3temp);
 
   for(int row=0; row<2; row++){
@@ -86,6 +119,8 @@ void loop() {
     }
   }
 
+  updateHddStatus();
+
   if (i > 0) {
     if(booting){
       booting = false;
@@ -102,7 +137,8 @@ void loop() {
     data[i] = '\0';
     updateCpuData(data);
     updateGpuData(data);
-    refreshDisplay(); 
+    refreshDisplay(); //We only refresh the screen when we get data
     
   }
+  delay(100); //This is the interval between pooling the hdd activity line
 }

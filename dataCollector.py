@@ -9,7 +9,8 @@ core_1_regex = re.compile(b'Core 1:       \+(\d\d)\.\d')
 core_2_regex = re.compile(b'Core 2:       \+(\d\d)\.\d')
 core_3_regex = re.compile(b'Core 3:       \+(\d\d)\.\d')
 
-gpu_regex = re.compile(b'\| \d+\%\ +(\d\d)C\ +P(\d)(?:\d)?\ +N/A')
+#gpu_regex = re.compile(b'\| \d+\%\ +(\d\d)C\ +P(\d)(?:\d)?\ +N/A')
+gpu_regex = re.compile(b'\| \d+\%\ +(\d\d)C\ +P(\d)')
 
 cpu_clock_regex = re.compile(b'cpu MHz\s+: (\d+)\.\d+')
 
